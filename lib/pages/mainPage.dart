@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:bordered_text/bordered_text.dart';
+import 'package:delightful_toast/delight_toast.dart';
+import 'package:delightful_toast/toast/components/toast_card.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_url_launcher/easy_url_launcher.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_icon_class/font_awesome_icon_class.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spec_bot/pages/savedPage.dart';
@@ -22,8 +25,7 @@ class _MainPageState extends State<MainPage> {
   double currentSliderValue = 0.0;
 
   int _selectedIndex = 0;
-  final List<String> _options = ['Gaming', 'Everyday', 'Work'];
-
+  final List<String> _options = ["Gaming", "Balanced", "Work"];
   final Map<String, dynamic> selectedItems = {};
   final SupabaseClient supabase = Supabase.instance.client;
 
@@ -55,7 +57,7 @@ class _MainPageState extends State<MainPage> {
     return processedData;
   }
 
-  int currentPageIndex = 0;
+  int currentPageIndex = 1;
   final List<Widget> pages = [
     const MainPage(),
     const SavedPage(),
@@ -94,17 +96,17 @@ class _MainPageState extends State<MainPage> {
         unselectedItemColor: sThirdColor,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(
-              Icons.home,
+            icon: FaIcon(FontAwesomeIcons.robot),
+            activeIcon: FaIcon(
+              FontAwesomeIcons.robot,
               size: 24,
             ),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.note_outlined),
-            activeIcon: Icon(
-              Icons.note,
+            icon: FaIcon(FontAwesomeIcons.clipboardList),
+            activeIcon: FaIcon(
+              FontAwesomeIcons.clipboardCheck,
               size: 24,
             ),
             label: 'Saved',
@@ -118,8 +120,7 @@ class _MainPageState extends State<MainPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     buildDropdownWithSupabaseData('CPUData', 'CPU', iCpuImage),
-                    buildDropdownWithSupabaseData(
-                        'MoboData', 'Motherboard', iMoboImage),
+                    buildDropdownWithSupabaseData('MoboData', 'Motherboard', iMoboImage),
                     buildDropdownWithSupabaseData('GPUData', 'GPU', iGpuImage),
                     buildDropdownWithSupabaseData('RAMData', 'RAM', iRamImage),
                     buildDropdownWithSupabaseData('PSUData', 'PSU', iPSUImage),
@@ -178,14 +179,15 @@ class _MainPageState extends State<MainPage> {
                                     style:
                                         stdTextStyle(sThirdColor, smallFont)),
                               ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 1.0),
-                                child: Text(
-                                    ' 💵 ${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(2) ?? '0.00')}₺',
-                                    style:
-                                        stdTextStyle(sGreenColor, smallFont)),
-                              ),
+                              if (selectedItem.containsKey('Socket'))
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 1.0),
+                                  child: Text(
+                                      ' 🧩 ${selectedItem['Socket'] ?? 'N/A'}',
+                                      style:
+                                      stdTextStyle(Colors.blue, smallFont)),
+                                ),
                               if (selectedItem.containsKey('Benchmark'))
                                 const Padding(
                                   padding:
@@ -206,15 +208,14 @@ class _MainPageState extends State<MainPage> {
                                       style:
                                           stdTextStyle(Colors.blue, smallFont)),
                                 ),
-                              if (selectedItem.containsKey('Socket'))
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 1.0),
-                                  child: Text(
-                                      ' 🧩 ${selectedItem['Socket'] ?? 'N/A'}',
-                                      style:
-                                          stdTextStyle(Colors.blue, smallFont)),
-                                ),
+                              Padding(
+                                padding:
+                                const EdgeInsets.symmetric(horizontal: 1.0),
+                                child: Text(
+                                    ' 💵 ${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
+                                    style:
+                                    stdTextStyle(sGreenColor, smallFont)),
+                              ),
                             ],
                           ),
                         ),
@@ -260,9 +261,13 @@ class _MainPageState extends State<MainPage> {
                     child: Text(" ✅ ${item['Model'].toString().toUpperCase()}",
                         style: stdTextStyle(sTextColor, smallFont)),
                   ),
-                  Text(
-                      ' 💵 ${(double.tryParse(item['AvgPrice']) ?? 0).toStringAsFixed(2)}₺',
-                      style: stdTextStyle(sGreenColor, smallFont)),
+                  if (item.containsKey('Socket'))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 3.0),
+                      child: Text(' 🧩 ${item['Socket'] ?? 'N/A'}',
+                          style: stdTextStyle(Colors.blue, smallFont)),
+                    ),
                   if (item.containsKey('Benchmark'))
                     Padding(
                         padding: const EdgeInsets.symmetric(
@@ -283,13 +288,9 @@ class _MainPageState extends State<MainPage> {
                       child: Text(' 〰 ${item['Frequency'] ?? 'N/A'}',
                           style: stdTextStyle(Colors.blue, smallFont)),
                     ),
-                  if (item.containsKey('Socket'))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 3.0),
-                      child: Text(' 🧩 ${item['Socket'] ?? 'N/A'}',
-                          style: stdTextStyle(Colors.blue, smallFont)),
-                    ),
+                  Text(
+                      ' 💵 ${(double.tryParse(item['AvgPrice']) ?? 0).toStringAsFixed(0)}₺',
+                      style: stdTextStyle(sGreenColor, smallFont)),
                 ],
               ),
             );
@@ -350,8 +351,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget buildDropdownWithSupabaseData(
-      String tableName, String label, String image) {
+  Widget buildDropdownWithSupabaseData(String tableName, String label, String image) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: fetchData(tableName),
       builder: (context, snapshot) {
@@ -401,9 +401,10 @@ class _MainPageState extends State<MainPage> {
                   Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: buildPriceWidget()),
-                  ElevatedButton(
+                   ElevatedButton(
+                    style: ButtonStyle(backgroundColor:  WidgetStateProperty.all<Color>(sPrimaryColor)),
                     onPressed: saveCurrentBuild,
-                    child: const Text("Save Build"),
+                    child: const FaIcon(FontAwesomeIcons.floppyDisk, color: sTextColor, size: 25.0),
                   ),
                 ],
               ),
@@ -497,12 +498,11 @@ class _MainPageState extends State<MainPage> {
                           child: RoundedLoadingButton(
                             width: 60,
                             height: 60,
-                            color: sThirdColor,
+                            color: sSecondaryColor,
                             successColor: sTextColor,
                             controller: _btnController,
                             onPressed: _doSomething,
-                            child: Text('Build',
-                                style: stdTextStyle(Colors.white, smallFont)),
+                            child: const FaIcon(FontAwesomeIcons.screwdriverWrench,color: sTextColor,size: 25,)
                           ),
                         )
                       ],
@@ -550,9 +550,7 @@ class _MainPageState extends State<MainPage> {
   void _doSomething() async {
     _btnController.start();
     await autoBuild();
-
     _btnController.success();
-
     Timer(const Duration(seconds: 5), () {
       _btnController.reset();
     });
@@ -651,36 +649,66 @@ class _MainPageState extends State<MainPage> {
     return component['Benchmark'] ?? 0;
   }
 
-// For clearing cache (use if needed)
+// clear cache
 // void clearCache() async {
 //   final prefs = await SharedPreferences.getInstance();
 //   prefs.clear();
 // }
-
   Future<void> saveBuild(BuildModel build) async {
     final prefs = await SharedPreferences.getInstance();
 
     List<String> builds = prefs.getStringList('savedBuilds') ?? [];
     builds.add(jsonEncode(build.toJson()));
     await prefs.setStringList('savedBuilds', builds);
-    print("Saved Builds: $builds");
+    // print("Saved Builds: $builds");
   }
 
   void saveCurrentBuild() async {
     final build = BuildModel(
-      cpu: selectedItems['CPU']!,
-      motherboard: selectedItems['Motherboard']!,
-      gpu: selectedItems['GPU']!,
-      ram: selectedItems['RAM']!,
-      psu: selectedItems['PSU']!,
+      cpu: ComponentModel(
+        model: selectedItems['CPU']['Model'],
+        avgPrice: double.parse(selectedItems['CPU']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        url: selectedItems['CPU']['URL'],
+      ),
+      motherboard: ComponentModel(
+        model: selectedItems['Motherboard']['Model'],
+        avgPrice: double.parse(selectedItems['Motherboard']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        url: selectedItems['Motherboard']['URL'],
+      ),
+      gpu: ComponentModel(
+        model: selectedItems['GPU']['Model'],
+        avgPrice: double.parse(selectedItems['GPU']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        url: selectedItems['GPU']['URL'],
+      ),
+      ram: ComponentModel(
+        model: selectedItems['RAM']['Model'],
+        avgPrice: double.parse(selectedItems['RAM']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        url: selectedItems['RAM']['URL'],
+      ),
+      psu: ComponentModel(
+        model: selectedItems['PSU']['Model'],
+        avgPrice: double.parse(selectedItems['PSU']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        url: selectedItems['PSU']['URL'],
+      ),
     );
 
-    await saveBuild(build);
+    await saveBuild(build); // Save the current build
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Build saved successfully!')),
-    );
+    // Show success toast
+    DelightToastBar(
+      builder: (context) => ToastCard(
+        color: sThirdColor,
+        leading: const FaIcon(
+          FontAwesomeIcons.checkToSlot,
+          size: 25,
+          color: sTextColor,
+        ),
+        title: Text(
+          'Build Saved Successfully!',
+          style: stdTextStyle(sTextColor, smallFont),
+        ),
+      ),
+    ).show(context);
   }
-
 
 }

@@ -1,11 +1,39 @@
 import 'dart:convert';
 
+class ComponentModel {
+  final String model;
+  final String avgPrice;
+  final String url;
+
+  ComponentModel({
+    required this.model,
+    required this.avgPrice,
+    required this.url,
+  });
+
+  factory ComponentModel.fromJson(Map<String, dynamic> json) {
+    return ComponentModel(
+      model: json['Model'],
+      avgPrice: json['AvgPrice'],
+      url: json['URL'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'Model': model,
+      'AvgPrice': avgPrice,
+      'URL': url,
+    };
+  }
+}
+
 class BuildModel {
-  final Map<String, dynamic> cpu;
-  final Map<String, dynamic> motherboard;
-  final Map<String, dynamic> gpu;
-  final Map<String, dynamic> ram;
-  final Map<String, dynamic> psu;
+  final ComponentModel cpu;
+  final ComponentModel motherboard;
+  final ComponentModel gpu;
+  final ComponentModel ram;
+  final ComponentModel psu;
 
   BuildModel({
     required this.cpu,
@@ -15,23 +43,23 @@ class BuildModel {
     required this.psu,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'cpu': jsonEncode(cpu),
-      'motherboard': jsonEncode(motherboard),
-      'gpu': jsonEncode(gpu),
-      'ram': jsonEncode(ram),
-      'psu': jsonEncode(psu),
-    };
-  }
-
   factory BuildModel.fromJson(Map<String, dynamic> json) {
     return BuildModel(
-      cpu: jsonDecode(json['cpu']),
-      motherboard: jsonDecode(json['motherboard']),
-      gpu: jsonDecode(json['gpu']),
-      ram: jsonDecode(json['ram']),
-      psu: jsonDecode(json['psu']),
+      cpu: ComponentModel.fromJson(jsonDecode(json['cpu'])),
+      motherboard: ComponentModel.fromJson(jsonDecode(json['motherboard'])),
+      gpu: ComponentModel.fromJson(jsonDecode(json['gpu'])),
+      ram: ComponentModel.fromJson(jsonDecode(json['ram'])),
+      psu: ComponentModel.fromJson(jsonDecode(json['psu'])),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'cpu': jsonEncode(cpu.toJson()),
+      'motherboard': jsonEncode(motherboard.toJson()),
+      'gpu': jsonEncode(gpu.toJson()),
+      'ram': jsonEncode(ram.toJson()),
+      'psu': jsonEncode(psu.toJson()),
+    };
   }
 }

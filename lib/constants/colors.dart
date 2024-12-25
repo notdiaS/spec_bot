@@ -18,9 +18,10 @@ const iPSUImage = 'assets/images/power-supply.png';
 
 double bigFont = 20.0;
 double smallFont = 13.0;
+double tinyFont = 10.0;
 
-TextStyle stdTextStyle(scolor, fontsz) =>
-    GoogleFonts.inter(fontWeight: FontWeight.bold, color: scolor, fontSize: fontsz);
+TextStyle stdTextStyle(scolor, fontsz) => GoogleFonts.inter(
+    fontWeight: FontWeight.bold, color: scolor, fontSize: fontsz);
 
 bool isSelected_1 = false;
 bool isSelected_2 = false;

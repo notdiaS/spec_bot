@@ -54,6 +54,9 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   shared_preferences: ^2.0.11
+  expansion_tile_card: ^3.0.0
+  awesome_snackbar_content: ^0.1.4
+  delightful_toast: ^1.1.0
 
 dev_dependencies:
   hive_generator: ^2.0.1
