@@ -25,7 +25,7 @@ class _MainPageState extends State<MainPage> {
   double currentSliderValue = 0.0;
 
   int _selectedIndex = 0;
-  final List<String> _options = ["Gaming", "Balanced", "Work"];
+  final List<String> _options = ["🕹️ Gaming", "⚖️ Balanced", "💼 Work"];
   final Map<String, dynamic> selectedItems = {};
   final SupabaseClient supabase = Supabase.instance.client;
 
@@ -57,7 +57,7 @@ class _MainPageState extends State<MainPage> {
     return processedData;
   }
 
-  int currentPageIndex = 1;
+  int currentPageIndex = 0;
   final List<Widget> pages = [
     const MainPage(),
     const SavedPage(),
@@ -379,6 +379,7 @@ class _MainPageState extends State<MainPage> {
         ),
         clipBehavior: Clip.hardEdge,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               decoration: BoxDecoration(
@@ -420,6 +421,7 @@ class _MainPageState extends State<MainPage> {
                 width: 175,
                 height: 170,
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -442,7 +444,7 @@ class _MainPageState extends State<MainPage> {
                         children: _options
                             .map((String label) => Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
+                                      horizontal: 7.5, vertical: 8),
                                   child: Text(
                                     label,
                                     style: stdTextStyle(null, smallFont),
@@ -590,26 +592,40 @@ class _MainPageState extends State<MainPage> {
       List<Map<String, dynamic>> rams = await ramFuture;
       List<Map<String, dynamic>> psus = await psuFuture;
 
+      // Select CPU
       Map<String, dynamic> selectedCPU = cpus
           .where((cpu) => _getPrice(cpu['AvgPrice']) <= cpuBudget)
           .reduce((a, b) => (_getBenchmark(a) > _getBenchmark(b)) ? a : b);
 
+      // Select GPU
       Map<String, dynamic> selectedGPU = gpus
           .where((gpu) => _getPrice(gpu['AvgPrice']) <= gpuBudget)
           .reduce((a, b) => (_getBenchmark(a) > _getBenchmark(b)) ? a : b);
 
+      // Match CPU and Motherboard socket
+      String cpuSocket = selectedCPU['Socket'];
       Map<String, dynamic> selectedMobo = mobos
-          .where((mobo) => _getPrice(mobo['AvgPrice']) <= moboBudget)
-          .firstWhere((mobo) => mobo['AvgPrice'] != null, orElse: () => {});
+          .where((mobo) =>
+      _getPrice(mobo['AvgPrice']) <= moboBudget &&
+          mobo['Socket'] == cpuSocket)
+          .firstWhere((mobo) => mobo['Socket'] != null, orElse: () => {});
 
+      // Match RAM frequency based on generation (DDR4/DDR5)
+      bool isDDR5 = ['AM5', 'LGA1700'].contains(cpuSocket);
       Map<String, dynamic> selectedRAM = rams
-          .where((ram) => _getPrice(ram['AvgPrice']) <= ramBudget)
-          .firstWhere((ram) => ram['AvgPrice'] != null, orElse: () => {});
+          .where((ram) =>
+      _getPrice(ram['AvgPrice']) <= ramBudget &&
+          (isDDR5
+              ? _extractFrequency(ram['Frequency']) >= 4800 // DDR5
+              : _extractFrequency(ram['Frequency']) <= 3600)) // DDR4
+          .firstWhere((ram) => ram['Frequency'] != null, orElse: () => {});
 
+      // Select PSU
       Map<String, dynamic> selectedPSU = psus
           .where((psu) => _getPrice(psu['AvgPrice']) <= psuBudget)
           .firstWhere((psu) => psu['AvgPrice'] != null, orElse: () => {});
 
+      // Error check
       if (selectedCPU.isEmpty ||
           selectedGPU.isEmpty ||
           selectedMobo.isEmpty ||
@@ -618,6 +634,7 @@ class _MainPageState extends State<MainPage> {
         throw Exception('Error: One or more components could not be selected.');
       }
 
+      // Update selected items
       setState(() {
         selectedItems['CPU'] = selectedCPU;
         selectedItems['GPU'] = selectedGPU;
@@ -625,6 +642,7 @@ class _MainPageState extends State<MainPage> {
         selectedItems['RAM'] = selectedRAM;
         selectedItems['PSU'] = selectedPSU;
       });
+
     } catch (e) {
       print("Error fetching data: $e");
       _btnController.error();
@@ -634,19 +652,19 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  double _getPrice(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is String) {
-      return double.tryParse(value) ?? 0.0;
-    }
-    return 0.0;
+  // Extracts numeric price from string and converts it to double
+  double _getPrice(String price) {
+    return double.tryParse(price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
   }
 
+  // Extracts numeric frequency from string
+  int _extractFrequency(String frequency) {
+    return int.tryParse(RegExp(r'\d+').firstMatch(frequency)?.group(0) ?? '0') ?? 0;
+  }
+
+  // Gets benchmark value for sorting performance
   int _getBenchmark(Map<String, dynamic> component) {
-    if (component['Benchmark'] is String) {
-      return int.tryParse(component['Benchmark']) ?? 0;
-    }
-    return component['Benchmark'] ?? 0;
+    return int.tryParse(component['Benchmark']?.toString() ?? '0') ?? 0;
   }
 
 // clear cache
@@ -694,8 +712,8 @@ class _MainPageState extends State<MainPage> {
 
     await saveBuild(build); // Save the current build
 
-    // Show success toast
     DelightToastBar(
+      autoDismiss: true,
       builder: (context) => ToastCard(
         color: sThirdColor,
         leading: const FaIcon(
