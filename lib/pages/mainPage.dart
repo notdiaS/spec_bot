@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:bordered_text/bordered_text.dart';
 import 'package:delightful_toast/delight_toast.dart';
 import 'package:delightful_toast/toast/components/toast_card.dart';
@@ -483,11 +484,11 @@ class _MainPageState extends State<MainPage> {
                                 thumbColor: sTextColor,
                                 value: currentSliderValue,
                                 min: 0,
-                                max: 50000,
+                                max: 100000,
                                 divisions: 20,
                                 onChanged: (double value) {
                                   setState(() {
-                                    currentSliderValue = value;
+                                    currentSliderValue = value.roundToDouble();
                                   });
                                 },
                               ),
@@ -546,36 +547,28 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  final RoundedLoadingButtonController _btnController =
-      RoundedLoadingButtonController();
+  final RoundedLoadingButtonController _btnController = RoundedLoadingButtonController();
 
-  void _doSomething() async {
-    _btnController.start();
-    await autoBuild();
-    _btnController.success();
-    Timer(const Duration(seconds: 5), () {
-      _btnController.reset();
-    });
-  }
 
-  Future<void> autoBuild() async {
+  Future<bool> autoBuild() async {
     double budget = currentSliderValue;
-    String useCase = _options[_selectedIndex];
+    String useCase = _options[_selectedIndex].toString();
 
-    double gpuBudget = budget * 0.3; // Default
-    double cpuBudget = budget * 0.3; // Default
-    double moboBudget = budget * 0.2; // Default
-    double ramBudget = budget * 0.1; // Default
-    double psuBudget = budget * 0.1; // Default
+    // Allocate budgets based on use case
+    double gpuBudget = budget * 0.4;
+    double cpuBudget = budget * 0.3;
+    double moboBudget = budget * 0.15;
+    double ramBudget = budget * 0.1;
+    double psuBudget = budget * 0.05;
 
-    if (useCase == 'Gaming') {
-      gpuBudget = budget * 0.4;
+    if (useCase == '🕹️ Gaming') {
+      gpuBudget = budget * 0.45;
       cpuBudget = budget * 0.25;
-    } else if (useCase == 'Work') {
-      cpuBudget = budget * 0.4;
-      gpuBudget = budget * 0.2;
-    } else if (useCase == 'Everyday') {
-      gpuBudget = budget * 0.3;
+    } else if (useCase == '💼 Work') {
+      cpuBudget = budget * 0.45;
+      gpuBudget = budget * 0.15;
+    } else if (useCase == '⚖️ Balanced') {
+      gpuBudget = budget * 0.35;
       cpuBudget = budget * 0.3;
     }
 
@@ -592,40 +585,51 @@ class _MainPageState extends State<MainPage> {
       List<Map<String, dynamic>> rams = await ramFuture;
       List<Map<String, dynamic>> psus = await psuFuture;
 
-      // Select CPU
-      Map<String, dynamic> selectedCPU = cpus
-          .where((cpu) => _getPrice(cpu['AvgPrice']) <= cpuBudget)
-          .reduce((a, b) => (_getBenchmark(a) > _getBenchmark(b)) ? a : b);
+      final random = Random();
 
-      // Select GPU
-      Map<String, dynamic> selectedGPU = gpus
-          .where((gpu) => _getPrice(gpu['AvgPrice']) <= gpuBudget)
-          .reduce((a, b) => (_getBenchmark(a) > _getBenchmark(b)) ? a : b);
+      Map<String, dynamic> selectedCPU = {};
+      Map<String, dynamic> selectedGPU = {};
+      Map<String, dynamic> selectedMobo = {};
+      Map<String, dynamic> selectedRAM = {};
+      Map<String, dynamic> selectedPSU = {};
 
-      // Match CPU and Motherboard socket
-      String cpuSocket = selectedCPU['Socket'];
-      Map<String, dynamic> selectedMobo = mobos
-          .where((mobo) =>
-      _getPrice(mobo['AvgPrice']) <= moboBudget &&
-          mobo['Socket'] == cpuSocket)
-          .firstWhere((mobo) => mobo['Socket'] != null, orElse: () => {});
+      for (int i = 0; i < 5; i++) {
+        // Select CPU with best benchmark within budget
+        var filteredCPUs = cpus.where((cpu) => _getPrice(cpu['AvgPrice']) <= cpuBudget).toList();
+        if (filteredCPUs.isNotEmpty) {
+          selectedCPU = filteredCPUs.reduce((a, b) => _getBenchmark(a) > _getBenchmark(b) ? a : b);
+        }
 
-      // Match RAM frequency based on generation (DDR4/DDR5)
-      bool isDDR5 = ['AM5', 'LGA1700'].contains(cpuSocket);
-      Map<String, dynamic> selectedRAM = rams
-          .where((ram) =>
-      _getPrice(ram['AvgPrice']) <= ramBudget &&
-          (isDDR5
-              ? _extractFrequency(ram['Frequency']) >= 4800 // DDR5
-              : _extractFrequency(ram['Frequency']) <= 3600)) // DDR4
-          .firstWhere((ram) => ram['Frequency'] != null, orElse: () => {});
+        // Select GPU with best benchmark within budget
+        var filteredGPUs = gpus.where((gpu) => _getPrice(gpu['AvgPrice']) <= gpuBudget).toList();
+        if (filteredGPUs.isNotEmpty) {
+          selectedGPU = filteredGPUs.reduce((a, b) => _getBenchmark(a) > _getBenchmark(b) ? a : b);
+        }
 
-      // Select PSU
-      Map<String, dynamic> selectedPSU = psus
-          .where((psu) => _getPrice(psu['AvgPrice']) <= psuBudget)
-          .firstWhere((psu) => psu['AvgPrice'] != null, orElse: () => {});
+        // Match CPU and Motherboard socket
+        String cpuSocket = selectedCPU['Socket'];
+        var filteredMobos = mobos.where((mobo) => _getPrice(mobo['AvgPrice']) <= moboBudget && mobo['Socket'] == cpuSocket).toList();
+        if (filteredMobos.isNotEmpty) {
+          selectedMobo = filteredMobos[random.nextInt(filteredMobos.length)];
+        }
 
-      // Error check
+        // Select RAM based on frequency-to-price ratio
+        bool isDDR5 = ['AM5', 'LGA1700'].contains(cpuSocket);
+        var filteredRAMs = rams.where((ram) => _getPrice(ram['AvgPrice']) <= ramBudget && (isDDR5 ? _extractFrequency(ram['Frequency']) >= 4800 : _extractFrequency(ram['Frequency']) <= 3600)).toList();
+        if (filteredRAMs.isNotEmpty) {
+          selectedRAM = filteredRAMs.reduce((a, b) => _extractFrequency(a['Frequency']) > _extractFrequency(b['Frequency']) ? a : b);
+        }
+
+        // Select PSU
+        var filteredPSUs = psus.where((psu) => _getPrice(psu['AvgPrice']) <= psuBudget).toList();
+        if (filteredPSUs.isNotEmpty) {
+          selectedPSU = filteredPSUs[random.nextInt(filteredPSUs.length)];
+        }
+
+        double totalPrice = calculateTotalPrice();
+        if (totalPrice > budget * 0.95) break;
+      }
+
       if (selectedCPU.isEmpty ||
           selectedGPU.isEmpty ||
           selectedMobo.isEmpty ||
@@ -634,7 +638,6 @@ class _MainPageState extends State<MainPage> {
         throw Exception('Error: One or more components could not be selected.');
       }
 
-      // Update selected items
       setState(() {
         selectedItems['CPU'] = selectedCPU;
         selectedItems['GPU'] = selectedGPU;
@@ -643,28 +646,60 @@ class _MainPageState extends State<MainPage> {
         selectedItems['PSU'] = selectedPSU;
       });
 
+
+      return true;
+
     } catch (e) {
-      print("Error fetching data: $e");
+      DelightToastBar(
+        autoDismiss: true,
+        builder: (context) => ToastCard(
+          color: sThirdColor,
+          leading: const FaIcon(
+            FontAwesomeIcons.checkToSlot,
+            size: 25,
+            color: sTextColor,
+          ),
+          title: Text(
+            'Error fetching data!',
+            style: stdTextStyle(sTextColor, smallFont),
+          ),
+        ),
+      ).show(context);
+      _btnController.error();
+      Timer(const Duration(seconds: 3), () {
+        _btnController.reset();
+      });
+      return false;
+    }
+  }
+
+  double _getPrice(String price) {
+    return double.tryParse(price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+  }
+
+  int _getBenchmark(Map<String, dynamic> component) {
+    return int.tryParse(component['Benchmark']?.toString() ?? '0') ?? 0;
+  }
+
+  int _extractFrequency(String frequency) {
+    return int.tryParse(RegExp(r'\d+').firstMatch(frequency)?.group(0) ?? '0') ?? 0;
+  }
+
+  void _doSomething() async {
+    _btnController.start();
+    bool success = await autoBuild();
+
+    if (success) {
+      _btnController.success();
+      Timer(const Duration(seconds: 5), () {
+        _btnController.reset();
+      });
+    } else {
       _btnController.error();
       Timer(const Duration(seconds: 3), () {
         _btnController.reset();
       });
     }
-  }
-
-  // Extracts numeric price from string and converts it to double
-  double _getPrice(String price) {
-    return double.tryParse(price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
-  }
-
-  // Extracts numeric frequency from string
-  int _extractFrequency(String frequency) {
-    return int.tryParse(RegExp(r'\d+').firstMatch(frequency)?.group(0) ?? '0') ?? 0;
-  }
-
-  // Gets benchmark value for sorting performance
-  int _getBenchmark(Map<String, dynamic> component) {
-    return int.tryParse(component['Benchmark']?.toString() ?? '0') ?? 0;
   }
 
 // clear cache
