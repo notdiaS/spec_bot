@@ -153,90 +153,82 @@ class _MainPageState extends State<MainPage> {
           });
         },
         selectedItem: selectedItems[hwType],
-        dropdownBuilder: (context, selectedItem) {
-          return Row(
-            children: [
-              Expanded(
-                child: Container(
-                  width: screenWidth * 0.45,
-                  height: screenHeight * 0.06,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: (selectedItem == null)
-                      ? ListTile(
-                          contentPadding: const EdgeInsets.only(left: 10),
-                          title: Text("No item selected",
-                              style: stdTextStyle(Colors.black, smallFont)),
-                        )
-                      : ListTile(
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    right: 1.0, left: 1.0),
-                                child: Text(
-                                    selectedItem['Model']
-                                        .toString()
-                                        .toUpperCase(),
-                                    style:
-                                        stdTextStyle(sThirdColor, smallFont)),
-                              ),
-                              if (selectedItem.containsKey('Socket'))
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 1.0),
-                                  child: Text(
-                                      ' 🧩 ${selectedItem['Socket'] ?? 'N/A'}',
-                                      style:
-                                          stdTextStyle(Colors.blue, smallFont)),
-                                ),
-                              if (selectedItem.containsKey('Benchmark'))
-                                const Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 1.0),
-                                  child: Icon(Icons.speed_outlined,
-                                      color: Colors.red, size: 18),
-                                ),
-                              Text(
-                                ' ${selectedItem['Benchmark'] ?? ''}',
-                                style: stdTextStyle(Colors.red, smallFont),
-                              ),
-                              if (selectedItem.containsKey('Frequency'))
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 1.0),
-                                  child: Text(
-                                      ' 〰 ${selectedItem['Frequency'] ?? 'N/A'}',
-                                      style:
-                                          stdTextStyle(Colors.blue, smallFont)),
-                                ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 1.0),
-                                child: Text(
-                                    ' 💵 ${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
-                                    style:
-                                        stdTextStyle(sGreenColor, smallFont)),
-                              ),
-                            ],
-                          ),
-                        ),
-                ),
+        dropdownBuilder: (context, selectedItem) {return Container(
+            height: screenHeight * 0.06,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: (selectedItem == null)
+                ? ListTile(
+              contentPadding: const EdgeInsets.only(left: 10),
+              title: Text(
+                "No item selected",
+                style: stdTextStyle(Colors.black, smallFont),
               ),
-            ],
+            )
+                : SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 1.0, left: 1.0),
+                    child: Text(
+                      selectedItem['Model'].toString().toUpperCase(),
+                      style: stdTextStyle(sThirdColor, smallFont),
+                    ),
+                  ),
+                  if (selectedItem.containsKey('Socket'))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 1.0),
+                      child: Text(
+                        ' 🧩${selectedItem['Socket'] ?? 'N/A'}',
+                        style: stdTextStyle(Colors.blue, smallFont),
+                      ),
+                    ),
+                  if (selectedItem.containsKey('Benchmark'))
+                  Text(
+                    ' ⚙️${selectedItem['Benchmark'] ?? ''}',
+                    style: stdTextStyle(Colors.red, smallFont),
+                  ),
+                  if (selectedItem.containsKey('Frequency'))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 1.0),
+                      child: Text(
+                        ' 〰${selectedItem['Frequency'] ?? 'N/A'}',
+                        style: stdTextStyle(Colors.blue, smallFont),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1.0),
+                    child: Text(
+                      ' 💵${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
+                      style: stdTextStyle(sGreenColor, smallFont),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         },
         popupProps: PopupProps.menu(
+          menuProps: MenuProps(
+            borderRadius: BorderRadius.circular(20),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+          ),
+          searchDelay: const Duration(milliseconds: 25),
           constraints: const BoxConstraints(maxHeight: 250),
           containerBuilder: (context, popupWidget) {
             return Container(
               decoration: BoxDecoration(
+                border: Border.all(
+                  color: sTextColor,
+                  width: 1.5,
+                ),
                 color: sPrimaryColor,
-                borderRadius: BorderRadius.circular(20), // Rounded corners
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: popupWidget, // Popup widget content
+              child: popupWidget,
             );
           },
           searchFieldProps: TextFieldProps(
@@ -264,48 +256,60 @@ class _MainPageState extends State<MainPage> {
           showSearchBox: true,
           isFilterOnline: true,
           itemBuilder: (context, item, isSelected) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 10),
-                    child: Text(" ✅ ${item['Model'].toString().toUpperCase()}",
-                        style: stdTextStyle(sTextColor, smallFont)),
-                  ),
-                  if (item.containsKey('Socket'))
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 3.0),
-                      child: Text(' 🧩 ${item['Socket'] ?? 'N/A'}',
-                          style: stdTextStyle(Colors.blue, smallFont)),
+                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10),
+                      child: Text(
+                        "✅${item['Model'].toString().toUpperCase()}",
+                        style: stdTextStyle(sTextColor, tinyFont),
+                      ),
                     ),
-                  if (item.containsKey('Benchmark'))
-                    Padding(
+                    if (item.containsKey('Socket'))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 3.0),
+                        child: Text(
+                          '🧩${item['Socket'] ?? 'N/A'}',
+                          style: stdTextStyle(Colors.blue, tinyFont),
+                        ),
+                      ),
+                    if (item.containsKey('Benchmark'))
+                      Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 8.0, horizontal: 10),
                         child: Row(
                           children: [
-                            const Icon(Icons.speed_outlined,
-                                color: Colors.red, size: 18),
-                            Text(' ${item['Benchmark'] ?? 'N/A'}',
-                                style: stdTextStyle(Colors.red, smallFont)),
+                            Text(
+                              '⚙️${item['Benchmark'] ?? 'N/A'}',
+                              style: stdTextStyle(Colors.red, tinyFont),
+                            ),
                           ],
-                        )),
-                  // if (selectedItem.containsKey('Socket')) Text(' Socket: ${selectedItem['Socket'] ?? 'N/A'}', style: stdTextStyle()),
-                  if (item.containsKey('Frequency'))
+                        ),
+                      ),
+                    if (item.containsKey('Frequency'))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 3.0),
+                        child: Text(
+                          '〰${item['Frequency'] ?? 'N/A'}',
+                          style: stdTextStyle(Colors.blue, tinyFont),
+                        ),
+                      ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 3.0),
-                      child: Text(' 〰 ${item['Frequency'] ?? 'N/A'}',
-                          style: stdTextStyle(Colors.blue, smallFont)),
+                      padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                      child: Text(
+                        '💵${(double.tryParse(item['AvgPrice']) ?? 0).toStringAsFixed(0)}₺',
+                        style: stdTextStyle(sGreenColor, tinyFont),
+                      ),
                     ),
-                  Text(
-                      ' 💵 ${(double.tryParse(item['AvgPrice']) ?? 0).toStringAsFixed(0)}₺',
-                      style: stdTextStyle(sGreenColor, smallFont)),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -765,41 +769,66 @@ class _MainPageState extends State<MainPage> {
   }
 
   void saveCurrentBuild() async {
+
+    if (selectedItems['CPU'] == null ||
+        selectedItems['Motherboard'] == null ||
+        selectedItems['GPU'] == null ||
+        selectedItems['RAM'] == null ||
+        selectedItems['PSU'] == null) {
+
+      DelightToastBar(
+        autoDismiss: true,
+        builder: (context) => ToastCard(
+          color: Colors.red,
+          leading: const FaIcon(
+            FontAwesomeIcons.triangleExclamation,
+            size: 25,
+            color: Colors.white,
+          ),
+          title: Text(
+            'Please add all components!',
+            style: stdTextStyle(Colors.white, smallFont),
+          ),
+        ),
+      ).show(context);
+      return;
+    }
+
     final build = BuildModel(
       cpu: ComponentModel(
         model: selectedItems['CPU']['Model'],
         avgPrice: double.parse(selectedItems['CPU']['AvgPrice'].toString())
-            .toStringAsFixed(0), // Round the price
+            .toStringAsFixed(0),
         url: selectedItems['CPU']['URL'],
       ),
       motherboard: ComponentModel(
         model: selectedItems['Motherboard']['Model'],
         avgPrice:
-            double.parse(selectedItems['Motherboard']['AvgPrice'].toString())
-                .toStringAsFixed(0), // Round the price
+        double.parse(selectedItems['Motherboard']['AvgPrice'].toString())
+            .toStringAsFixed(0),
         url: selectedItems['Motherboard']['URL'],
       ),
       gpu: ComponentModel(
         model: selectedItems['GPU']['Model'],
         avgPrice: double.parse(selectedItems['GPU']['AvgPrice'].toString())
-            .toStringAsFixed(0), // Round the price
+            .toStringAsFixed(0),
         url: selectedItems['GPU']['URL'],
       ),
       ram: ComponentModel(
         model: selectedItems['RAM']['Model'],
         avgPrice: double.parse(selectedItems['RAM']['AvgPrice'].toString())
-            .toStringAsFixed(0), // Round the price
+            .toStringAsFixed(0),
         url: selectedItems['RAM']['URL'],
       ),
       psu: ComponentModel(
         model: selectedItems['PSU']['Model'],
         avgPrice: double.parse(selectedItems['PSU']['AvgPrice'].toString())
-            .toStringAsFixed(0), // Round the price
+            .toStringAsFixed(0),
         url: selectedItems['PSU']['URL'],
       ),
     );
 
-    await saveBuild(build); // Save the current build
+    await saveBuild(build);
 
     DelightToastBar(
       autoDismiss: true,
@@ -817,4 +846,5 @@ class _MainPageState extends State<MainPage> {
       ),
     ).show(context);
   }
+
 }
