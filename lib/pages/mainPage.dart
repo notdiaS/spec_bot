@@ -26,6 +26,7 @@ class _MainPageState extends State<MainPage> {
   double currentSliderValue = 0.0;
 
   int _selectedIndex = 0;
+  // "⚖️ Balanced",
   final List<String> _options = ["🕹️ Gaming", "⚖️ Balanced", "💼 Work"];
   final Map<String, dynamic> selectedItems = {};
   final SupabaseClient supabase = Supabase.instance.client;
@@ -232,16 +233,17 @@ class _MainPageState extends State<MainPage> {
           containerBuilder: (context, popupWidget) {
             return Container(
               decoration: BoxDecoration(
-                color: sPrimaryColor, // Background color of the popup
+                color: sPrimaryColor,
                 borderRadius: BorderRadius.circular(20), // Rounded corners
               ),
               child: popupWidget, // Popup widget content
             );
           },
-          searchFieldProps: const TextFieldProps(
+          searchFieldProps: TextFieldProps(
+            style: stdTextStyle(sTextColor,smallFont),
             cursorHeight: 20,
             cursorColor: sSecondaryColor,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               filled: true,
               fillColor: sFillColor,
               border: OutlineInputBorder(
@@ -363,8 +365,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget buildDropdownWithSupabaseData(
-      String tableName, String label, String image) {
+  Widget buildDropdownWithSupabaseData(String tableName, String label, String image) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: fetchData(tableName),
       builder: (context, snapshot) {
@@ -384,156 +385,158 @@ class _MainPageState extends State<MainPage> {
 
   Widget buildPriceCard() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-          side: const BorderSide(color: sFillColor),
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: sPrimaryColor,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: sFillColor),
-              ),
-              margin: const EdgeInsets.all(10),
-              width: 100,
-              height: 170,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(
-                      'Price:',
-                      style: stdTextStyle(Colors.white, bigFont),
-                    ),
-                  ),
-                  Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: buildPriceWidget()),
-                  ElevatedButton(
-                    style: ButtonStyle(
-                        backgroundColor:
-                            WidgetStateProperty.all<Color>(sPrimaryColor)),
-                    onPressed: saveCurrentBuild,
-                    child: const FaIcon(FontAwesomeIcons.floppyDisk,
-                        color: sTextColor, size: 25.0),
-                  ),
-                ],
+      padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+              side: const BorderSide(color: sFillColor),
+            ),
+            clipBehavior: Clip.hardEdge,
+            child:
+            Column(
+              children: [
+                _buildBudgetColumn(),
+                _buildPriceRow(),
+              ],
+            )
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPriceRow() {
+    return Container(
+      decoration: BoxDecoration(
+        color: sPrimaryColor,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: sFillColor),
+      ),
+      margin: const EdgeInsets.all(3),
+      padding: const EdgeInsets.only(top:5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Price:',
+            style: stdTextStyle(Colors.white, bigFont),
+          ),
+          buildPriceWidget(),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: sPrimaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: sPrimaryColor,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: sFillColor),
-                ),
-                margin: const EdgeInsets.all(10),
-                width: 175,
-                height: 170,
+            onPressed: saveCurrentBuild,
+            child: const FaIcon(
+              FontAwesomeIcons.floppyDisk,
+              color: sTextColor,
+              size: 25.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBudgetColumn() {
+    return Container(
+      decoration: BoxDecoration(
+        color: sPrimaryColor,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: sFillColor),
+      ),
+      margin: const EdgeInsets.all(3),
+      padding: const EdgeInsets.only(bottom:5),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ToggleButtons(
+                constraints: const BoxConstraints(minWidth: 60),
+                borderColor: sThirdColor,
+                selectedBorderColor: sTextColor,
+                borderWidth: 2,
+                selectedColor: sTextColor,
+                color: sThirdColor,
+                fillColor: sThirdColor,
+                borderRadius: BorderRadius.circular(10),
+                onPressed: (int index) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+                isSelected: List.generate(
+                    _options.length, (index) => index == _selectedIndex),
+                children: _options
+                    .map((String label) => Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7.5, vertical: 8),
+                  child: Text(
+                    label,
+                    style: stdTextStyle(null, smallFont),
+                  ),
+                ))
+                    .toList(),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10.0, vertical: 10.0),
-                      child: ToggleButtons(
-                        borderColor: sThirdColor,
-                        selectedBorderColor: sTextColor,
-                        borderWidth: 2,
-                        selectedColor: sTextColor,
-                        color: sThirdColor,
-                        fillColor: sThirdColor,
-                        borderRadius: BorderRadius.circular(10),
-                        onPressed: (int index) {
-                          setState(() {
-                            _selectedIndex = index;
-                          });
-                        },
-                        isSelected: List.generate(_options.length,
-                            (index) => index == _selectedIndex),
-                        children: _options
-                            .map((String label) => Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 7.5, vertical: 8),
-                                  child: Text(
-                                    label,
-                                    style: stdTextStyle(null, smallFont),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
+                    Text(
+                      "Budget: ",
+                      style: stdTextStyle(Colors.white, 18.0),
                     ),
-                    Row(
-                      children: [
-                        Column(
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Budget: ",
-                                    style: stdTextStyle(Colors.white, 18.0),
-                                  ),
-                                  Text(
-                                    "$currentSliderValue",
-                                    style: stdTextStyle(sTextColor, 18.0),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 1.0, horizontal: 10),
-                              child: Slider(
-                                inactiveColor: sSecondaryColor,
-                                activeColor: sTextColor,
-                                thumbColor: sTextColor,
-                                value: currentSliderValue,
-                                min: 0,
-                                max: 75000,
-                                divisions: 20,
-                                onChanged: (double value) {
-                                  setState(() {
-                                    currentSliderValue = value.roundToDouble();
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10.0, vertical: 5.0),
-                          child: RoundedLoadingButton(
-                              width: 60,
-                              height: 60,
-                              color: sSecondaryColor,
-                              successColor: sTextColor,
-                              controller: _btnController,
-                              onPressed: _doSomething,
-                              child: const FaIcon(
-                                FontAwesomeIcons.screwdriverWrench,
-                                color: sTextColor,
-                                size: 25,
-                              )),
-                        )
-                      ],
+                    Text(
+                      "$currentSliderValue",
+                      style: stdTextStyle(sTextColor, 18.0),
+                    ),
+                    Slider(
+                      inactiveColor: sSecondaryColor,
+                      activeColor: sTextColor,
+                      thumbColor: sTextColor,
+                      value: currentSliderValue,
+                      min: 0,
+                      max: 75000,
+                      divisions: 20,
+                      onChanged: (double value) {
+                        setState(() {
+                          currentSliderValue = value.roundToDouble();
+                        });
+                      },
                     ),
                   ],
                 ),
               ),
-            )
-          ],
-        ),
+              Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: RoundedLoadingButton(
+                  width: 60,
+                  height: 60,
+                  color: sSecondaryColor,
+                  successColor: sTextColor,
+                  controller: _btnController,
+                  onPressed: _doSomething,
+                  child: const FaIcon(
+                    FontAwesomeIcons.screwdriverWrench,
+                    color: sTextColor,
+                    size: 25,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -559,15 +562,13 @@ class _MainPageState extends State<MainPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
       child: Text(
-        '${totalPrice.toStringAsFixed(0)} ₺',
-        style: stdTextStyle(sTextColor, 13.0),
+        ' ${totalPrice.toStringAsFixed(0)} ₺',
+        style: stdTextStyle(sTextColor, bigFont),
       ),
     );
   }
 
-  final RoundedLoadingButtonController _btnController =
-      RoundedLoadingButtonController();
-
+  final RoundedLoadingButtonController _btnController = RoundedLoadingButtonController();
 
   Future<bool> autoBuild() async {
     double budget = currentSliderValue;
@@ -641,7 +642,6 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-// Helper Methods
   Map<String, double> _allocateBudgets(double budget, String useCase) {
     switch (useCase) {
       case '🕹️ Gaming':
@@ -755,11 +755,6 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-// clear cache
-// void clearCache() async {
-//   final prefs = await SharedPreferences.getInstance();
-//   prefs.clear();
-// }
   Future<void> saveBuild(BuildModel build) async {
     final prefs = await SharedPreferences.getInstance();
 
