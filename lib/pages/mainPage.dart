@@ -94,6 +94,8 @@ class _MainPageState extends State<MainPage> {
         },
         backgroundColor: sSecondaryColor,
         selectedItemColor: sTextColor,
+        selectedLabelStyle: stdTextStyle(sTextColor, smallFont),
+        unselectedLabelStyle: stdTextStyle(sThirdColor, smallFont),
         unselectedItemColor: sThirdColor,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -187,7 +189,7 @@ class _MainPageState extends State<MainPage> {
                                   child: Text(
                                       ' 🧩 ${selectedItem['Socket'] ?? 'N/A'}',
                                       style:
-                                      stdTextStyle(Colors.blue, smallFont)),
+                                          stdTextStyle(Colors.blue, smallFont)),
                                 ),
                               if (selectedItem.containsKey('Benchmark'))
                                 const Padding(
@@ -211,11 +213,11 @@ class _MainPageState extends State<MainPage> {
                                 ),
                               Padding(
                                 padding:
-                                const EdgeInsets.symmetric(horizontal: 1.0),
+                                    const EdgeInsets.symmetric(horizontal: 1.0),
                                 child: Text(
                                     ' 💵 ${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
                                     style:
-                                    stdTextStyle(sGreenColor, smallFont)),
+                                        stdTextStyle(sGreenColor, smallFont)),
                               ),
                             ],
                           ),
@@ -226,7 +228,16 @@ class _MainPageState extends State<MainPage> {
           );
         },
         popupProps: PopupProps.menu(
-          constraints: const BoxConstraints(maxHeight: 300),
+          constraints: const BoxConstraints(maxHeight: 250),
+          containerBuilder: (context, popupWidget) {
+            return Container(
+              decoration: BoxDecoration(
+                color: sPrimaryColor, // Background color of the popup
+                borderRadius: BorderRadius.circular(20), // Rounded corners
+              ),
+              child: popupWidget, // Popup widget content
+            );
+          },
           searchFieldProps: const TextFieldProps(
             cursorHeight: 20,
             cursorColor: sSecondaryColor,
@@ -352,7 +363,8 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget buildDropdownWithSupabaseData(String tableName, String label, String image) {
+  Widget buildDropdownWithSupabaseData(
+      String tableName, String label, String image) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: fetchData(tableName),
       builder: (context, snapshot) {
@@ -403,10 +415,13 @@ class _MainPageState extends State<MainPage> {
                   Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: buildPriceWidget()),
-                   ElevatedButton(
-                    style: ButtonStyle(backgroundColor:  WidgetStateProperty.all<Color>(sPrimaryColor)),
+                  ElevatedButton(
+                    style: ButtonStyle(
+                        backgroundColor:
+                            WidgetStateProperty.all<Color>(sPrimaryColor)),
                     onPressed: saveCurrentBuild,
-                    child: const FaIcon(FontAwesomeIcons.floppyDisk, color: sTextColor, size: 25.0),
+                    child: const FaIcon(FontAwesomeIcons.floppyDisk,
+                        color: sTextColor, size: 25.0),
                   ),
                 ],
               ),
@@ -484,7 +499,7 @@ class _MainPageState extends State<MainPage> {
                                 thumbColor: sTextColor,
                                 value: currentSliderValue,
                                 min: 0,
-                                max: 100000,
+                                max: 75000,
                                 divisions: 20,
                                 onChanged: (double value) {
                                   setState(() {
@@ -499,14 +514,17 @@ class _MainPageState extends State<MainPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10.0, vertical: 5.0),
                           child: RoundedLoadingButton(
-                            width: 60,
-                            height: 60,
-                            color: sSecondaryColor,
-                            successColor: sTextColor,
-                            controller: _btnController,
-                            onPressed: _doSomething,
-                            child: const FaIcon(FontAwesomeIcons.screwdriverWrench,color: sTextColor,size: 25,)
-                          ),
+                              width: 60,
+                              height: 60,
+                              color: sSecondaryColor,
+                              successColor: sTextColor,
+                              controller: _btnController,
+                              onPressed: _doSomething,
+                              child: const FaIcon(
+                                FontAwesomeIcons.screwdriverWrench,
+                                color: sTextColor,
+                                size: 25,
+                              )),
                         )
                       ],
                     ),
@@ -547,97 +565,67 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  final RoundedLoadingButtonController _btnController = RoundedLoadingButtonController();
+  final RoundedLoadingButtonController _btnController =
+      RoundedLoadingButtonController();
 
 
   Future<bool> autoBuild() async {
     double budget = currentSliderValue;
     String useCase = _options[_selectedIndex].toString();
 
-    // Allocate budgets based on use case
-    double gpuBudget = budget * 0.4;
-    double cpuBudget = budget * 0.3;
-    double moboBudget = budget * 0.15;
-    double ramBudget = budget * 0.1;
-    double psuBudget = budget * 0.05;
-
-    if (useCase == '🕹️ Gaming') {
-      gpuBudget = budget * 0.45;
-      cpuBudget = budget * 0.25;
-    } else if (useCase == '💼 Work') {
-      cpuBudget = budget * 0.45;
-      gpuBudget = budget * 0.15;
-    } else if (useCase == '⚖️ Balanced') {
-      gpuBudget = budget * 0.35;
-      cpuBudget = budget * 0.3;
-    }
+    // Calculate budgets based on use case
+    Map<String, double> budgets = _allocateBudgets(budget, useCase);
 
     try {
-      var cpuFuture = fetchData('CPUData');
-      var gpuFuture = fetchData('GPUData');
-      var moboFuture = fetchData('MoboData');
-      var ramFuture = fetchData('RAMData');
-      var psuFuture = fetchData('PSUData');
+      // Fetch all data concurrently
+      var data = await Future.wait([
+        fetchData('CPUData'),
+        fetchData('GPUData'),
+        fetchData('MoboData'),
+        fetchData('RAMData'),
+        fetchData('PSUData')
+      ]);
 
-      List<Map<String, dynamic>> cpus = await cpuFuture;
-      List<Map<String, dynamic>> gpus = await gpuFuture;
-      List<Map<String, dynamic>> mobos = await moboFuture;
-      List<Map<String, dynamic>> rams = await ramFuture;
-      List<Map<String, dynamic>> psus = await psuFuture;
+      // Extract data
+      List<Map<String, dynamic>> cpus = data[0];
+      List<Map<String, dynamic>> gpus = data[1];
+      List<Map<String, dynamic>> mobos = data[2];
+      List<Map<String, dynamic>> rams = data[3];
+      List<Map<String, dynamic>> psus = data[4];
 
-      final random = Random();
+      // Select components
+      var selectedCPU = _selectBestComponent(cpus, budgets['CPU']!, _getBenchmark);
+      var selectedGPU = _selectBestComponent(gpus, budgets['GPU']!, _getBenchmark);
 
-      Map<String, dynamic> selectedCPU = {};
-      Map<String, dynamic> selectedGPU = {};
-      Map<String, dynamic> selectedMobo = {};
-      Map<String, dynamic> selectedRAM = {};
-      Map<String, dynamic> selectedPSU = {};
-
-      for (int i = 0; i < 5; i++) {
-        // Select CPU with best benchmark within budget
-        var filteredCPUs = cpus.where((cpu) => _getPrice(cpu['AvgPrice']) <= cpuBudget).toList();
-        if (filteredCPUs.isNotEmpty) {
-          selectedCPU = filteredCPUs.reduce((a, b) => _getBenchmark(a) > _getBenchmark(b) ? a : b);
-        }
-
-        // Select GPU with best benchmark within budget
-        var filteredGPUs = gpus.where((gpu) => _getPrice(gpu['AvgPrice']) <= gpuBudget).toList();
-        if (filteredGPUs.isNotEmpty) {
-          selectedGPU = filteredGPUs.reduce((a, b) => _getBenchmark(a) > _getBenchmark(b) ? a : b);
-        }
-
-        // Match CPU and Motherboard socket
-        String cpuSocket = selectedCPU['Socket'];
-        var filteredMobos = mobos.where((mobo) => _getPrice(mobo['AvgPrice']) <= moboBudget && mobo['Socket'] == cpuSocket).toList();
-        if (filteredMobos.isNotEmpty) {
-          selectedMobo = filteredMobos[random.nextInt(filteredMobos.length)];
-        }
-
-        // Select RAM based on frequency-to-price ratio
-        bool isDDR5 = ['AM5', 'LGA1700'].contains(cpuSocket);
-        var filteredRAMs = rams.where((ram) => _getPrice(ram['AvgPrice']) <= ramBudget && (isDDR5 ? _extractFrequency(ram['Frequency']) >= 4800 : _extractFrequency(ram['Frequency']) <= 3600)).toList();
-        if (filteredRAMs.isNotEmpty) {
-          selectedRAM = filteredRAMs.reduce((a, b) => _extractFrequency(a['Frequency']) > _extractFrequency(b['Frequency']) ? a : b);
-        }
-
-        // Select PSU
-        var filteredPSUs = psus.where((psu) => _getPrice(psu['AvgPrice']) <= psuBudget).toList();
-        if (filteredPSUs.isNotEmpty) {
-          selectedPSU = filteredPSUs[random.nextInt(filteredPSUs.length)];
-        }
-
-        double totalPrice = calculateTotalPrice();
-        if (totalPrice > budget * 0.95) break;
+      if (selectedCPU.isEmpty || selectedGPU.isEmpty) {
+        throw Exception('CPU or GPU selection failed.');
       }
 
-      if (selectedCPU.isEmpty ||
-          selectedGPU.isEmpty ||
-          selectedMobo.isEmpty ||
-          selectedRAM.isEmpty ||
-          selectedPSU.isEmpty) {
-        throw Exception('Error: One or more components could not be selected.');
+      // Match motherboard socket
+      String cpuSocket = selectedCPU['Socket'];
+      var selectedMobo = _selectMatchingComponent(
+        mobos,
+        budgets['Mobo']!,
+            (mobo) => mobo['Socket'] == cpuSocket,
+      );
+
+      bool isDDR5 = ['AM5', 'LGA1700'].contains(cpuSocket);
+      var selectedRAM = _selectBestComponent(
+        rams,
+        budgets['RAM']!,
+            (ram) => _extractFrequency(ram['Frequency']),
+        isDDR5 ? 4800 : 3600,
+      );
+
+      var selectedPSU = _selectRandomComponent(psus, budgets['PSU']!);
+
+      // Final validation
+      if ([selectedCPU, selectedGPU, selectedMobo, selectedRAM, selectedPSU]
+          .any((component) => component.isEmpty)) {
+        throw Exception('One or more components could not be selected.');
       }
 
+      // Update UI state
       setState(() {
         selectedItems['CPU'] = selectedCPU;
         selectedItems['GPU'] = selectedGPU;
@@ -646,31 +634,94 @@ class _MainPageState extends State<MainPage> {
         selectedItems['PSU'] = selectedPSU;
       });
 
-
       return true;
-
     } catch (e) {
-      DelightToastBar(
-        autoDismiss: true,
-        builder: (context) => ToastCard(
-          color: sThirdColor,
-          leading: const FaIcon(
-            FontAwesomeIcons.checkToSlot,
-            size: 25,
-            color: sTextColor,
-          ),
-          title: Text(
-            'Error fetching data!',
-            style: stdTextStyle(sTextColor, smallFont),
-          ),
-        ),
-      ).show(context);
-      _btnController.error();
-      Timer(const Duration(seconds: 3), () {
-        _btnController.reset();
-      });
+      _showErrorToast('Error fetching data!');
       return false;
     }
+  }
+
+// Helper Methods
+  Map<String, double> _allocateBudgets(double budget, String useCase) {
+    switch (useCase) {
+      case '🕹️ Gaming':
+        return {
+          'GPU': budget * 0.5,
+          'CPU': budget * 0.4,
+          'Mobo': budget * 0.15,
+          'RAM': budget * 0.1,
+          'PSU': budget * 0.05,
+        };
+      case '💼 Work':
+        return {
+          'GPU': budget * 0.4,
+          'CPU': budget * 0.5,
+          'Mobo': budget * 0.15,
+          'RAM': budget * 0.1,
+          'PSU': budget * 0.05,
+        };
+      default:
+        return {
+          'GPU': budget * 0.4,
+          'CPU': budget * 0.35,
+          'Mobo': budget * 0.15,
+          'RAM': budget * 0.1,
+          'PSU': budget * 0.05,
+        };
+    }
+  }
+
+  Map<String, dynamic> _selectBestComponent(
+      List<Map<String, dynamic>> components,
+      double budget,
+      Function comparator, [
+        int? threshold,
+      ]) {
+    var filtered = components.where((c) => _getPrice(c['AvgPrice']) <= budget);
+
+    if (threshold != null) {
+      filtered = filtered.where(
+              (c) => _extractFrequency(c['Frequency']) >= threshold);
+    }
+
+    return filtered.isNotEmpty
+        ? filtered.reduce((a, b) => comparator(a) > comparator(b) ? a : b)
+        : {};
+  }
+
+  Map<String, dynamic> _selectMatchingComponent(
+      List<Map<String, dynamic>> components,
+      double budget,
+      bool Function(Map<String, dynamic>) condition) {
+    var filtered = components.where((c) =>
+    _getPrice(c['AvgPrice']) <= budget && condition(c)).toList();
+    return filtered.isNotEmpty ? filtered[Random().nextInt(filtered.length)] : {};
+  }
+
+  Map<String, dynamic> _selectRandomComponent(
+      List<Map<String, dynamic>> components, double budget) {
+    var filtered = components
+        .where((c) => _getPrice(c['AvgPrice']) <= budget)
+        .toList();
+    return filtered.isNotEmpty ? filtered[Random().nextInt(filtered.length)] : {};
+  }
+
+  void _showErrorToast(String message) {
+    DelightToastBar(
+      autoDismiss: true,
+      builder: (context) => ToastCard(
+        color: sThirdColor,
+        leading: const FaIcon(
+          FontAwesomeIcons.triangleExclamation,
+          size: 25,
+          color: Colors.red,
+        ),
+        title: Text(
+          message,
+          style: stdTextStyle(sTextColor, smallFont),
+        ),
+      ),
+    ).show(context);
   }
 
   double _getPrice(String price) {
@@ -682,7 +733,9 @@ class _MainPageState extends State<MainPage> {
   }
 
   int _extractFrequency(String frequency) {
-    return int.tryParse(RegExp(r'\d+').firstMatch(frequency)?.group(0) ?? '0') ?? 0;
+    return int.tryParse(
+            RegExp(r'\d+').firstMatch(frequency)?.group(0) ?? '0') ??
+        0;
   }
 
   void _doSomething() async {
@@ -713,34 +766,40 @@ class _MainPageState extends State<MainPage> {
     List<String> builds = prefs.getStringList('savedBuilds') ?? [];
     builds.add(jsonEncode(build.toJson()));
     await prefs.setStringList('savedBuilds', builds);
-    // print("Saved Builds: $builds");
+
   }
 
   void saveCurrentBuild() async {
     final build = BuildModel(
       cpu: ComponentModel(
         model: selectedItems['CPU']['Model'],
-        avgPrice: double.parse(selectedItems['CPU']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        avgPrice: double.parse(selectedItems['CPU']['AvgPrice'].toString())
+            .toStringAsFixed(0), // Round the price
         url: selectedItems['CPU']['URL'],
       ),
       motherboard: ComponentModel(
         model: selectedItems['Motherboard']['Model'],
-        avgPrice: double.parse(selectedItems['Motherboard']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        avgPrice:
+            double.parse(selectedItems['Motherboard']['AvgPrice'].toString())
+                .toStringAsFixed(0), // Round the price
         url: selectedItems['Motherboard']['URL'],
       ),
       gpu: ComponentModel(
         model: selectedItems['GPU']['Model'],
-        avgPrice: double.parse(selectedItems['GPU']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        avgPrice: double.parse(selectedItems['GPU']['AvgPrice'].toString())
+            .toStringAsFixed(0), // Round the price
         url: selectedItems['GPU']['URL'],
       ),
       ram: ComponentModel(
         model: selectedItems['RAM']['Model'],
-        avgPrice: double.parse(selectedItems['RAM']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        avgPrice: double.parse(selectedItems['RAM']['AvgPrice'].toString())
+            .toStringAsFixed(0), // Round the price
         url: selectedItems['RAM']['URL'],
       ),
       psu: ComponentModel(
         model: selectedItems['PSU']['Model'],
-        avgPrice: double.parse(selectedItems['PSU']['AvgPrice'].toString()).toStringAsFixed(0), // Round the price
+        avgPrice: double.parse(selectedItems['PSU']['AvgPrice'].toString())
+            .toStringAsFixed(0), // Round the price
         url: selectedItems['PSU']['URL'],
       ),
     );
@@ -763,5 +822,4 @@ class _MainPageState extends State<MainPage> {
       ),
     ).show(context);
   }
-
 }
