@@ -6,6 +6,8 @@ const sSecondaryColor = Color(0xff00093d);
 const sThirdColor = Color(0xff011080);
 const sTextColor = Color(0xffD48F0A);
 
+
+const sStrokeColor = Color(0xffffa400);
 const sFillColor = Color(0xBEFFFFFF);
 const sGreenColor = Color(0xBE01A20E);
 
@@ -17,6 +19,7 @@ const iStorageImage = 'assets/images/ssd.png';
 const iPSUImage = 'assets/images/power-supply.png';
 
 double bigFont = 20.0;
+double mediumFont = 16.0;
 double smallFont = 13.0;
 double tinyFont = 10.0;
 

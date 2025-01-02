@@ -35,12 +35,18 @@ class BuildModel {
   final ComponentModel ram;
   final ComponentModel psu;
 
+
+  String? customTitle;
+  bool isEditingTitle;
+
   BuildModel({
     required this.cpu,
     required this.motherboard,
     required this.gpu,
     required this.ram,
     required this.psu,
+    this.customTitle,
+    this.isEditingTitle = false,
   });
 
   factory BuildModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +56,8 @@ class BuildModel {
       gpu: ComponentModel.fromJson(jsonDecode(json['gpu'])),
       ram: ComponentModel.fromJson(jsonDecode(json['ram'])),
       psu: ComponentModel.fromJson(jsonDecode(json['psu'])),
+      customTitle: json['customTitle'] ?? '', // Parse custom title
+      isEditingTitle: json['isEditingTitle'] ?? false, // Parse edit state
     );
   }
 
@@ -60,9 +68,8 @@ class BuildModel {
       'gpu': jsonEncode(gpu.toJson()),
       'ram': jsonEncode(ram.toJson()),
       'psu': jsonEncode(psu.toJson()),
+      'customTitle': customTitle, // Include customTitle in the JSON
+      'isEditingTitle': isEditingTitle, // Include isEditingTitle in the JSON
     };
   }
-
 }
-
-

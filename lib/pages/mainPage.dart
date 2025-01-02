@@ -23,10 +23,9 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  double currentSliderValue = 0.0;
 
+  double currentSliderValue = 0.0;
   int _selectedIndex = 0;
-  // "⚖️ Balanced",
   final List<String> _options = ["🕹️ Gaming", "⚖️ Balanced", "💼 Work"];
   final Map<String, dynamic> selectedItems = {};
   final SupabaseClient supabase = Supabase.instance.client;
@@ -65,7 +64,7 @@ class _MainPageState extends State<MainPage> {
     const SavedPage(),
   ];
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: sPrimaryColor,
@@ -181,27 +180,27 @@ class _MainPageState extends State<MainPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 1.0),
                       child: Text(
-                        ' 🧩${selectedItem['Socket'] ?? 'N/A'}',
+                        '  🧩${selectedItem['Socket'] ?? 'N/A'}',
                         style: stdTextStyle(Colors.blue, smallFont),
                       ),
                     ),
                   if (selectedItem.containsKey('Benchmark'))
                   Text(
-                    ' ⚙️${selectedItem['Benchmark'] ?? ''}',
+                    '  ⚡️${selectedItem['Benchmark'] ?? ''}',
                     style: stdTextStyle(Colors.red, smallFont),
                   ),
                   if (selectedItem.containsKey('Frequency'))
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 1.0),
                       child: Text(
-                        ' 〰${selectedItem['Frequency'] ?? 'N/A'}',
+                        '  〰${selectedItem['Frequency'] ?? 'N/A'}',
                         style: stdTextStyle(Colors.blue, smallFont),
                       ),
                     ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 1.0),
                     child: Text(
-                      ' 💵${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
+                      '  💵${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
                       style: stdTextStyle(sGreenColor, smallFont),
                     ),
                   ),
@@ -286,7 +285,7 @@ class _MainPageState extends State<MainPage> {
                         child: Row(
                           children: [
                             Text(
-                              '⚙️${item['Benchmark'] ?? 'N/A'}',
+                              '⚡️${item['Benchmark'] ?? 'N/A'}',
                               style: stdTextStyle(Colors.red, tinyFont),
                             ),
                           ],
@@ -578,11 +577,10 @@ class _MainPageState extends State<MainPage> {
     double budget = currentSliderValue;
     String useCase = _options[_selectedIndex].toString();
 
-    // Calculate budgets based on use case
     Map<String, double> budgets = _allocateBudgets(budget, useCase);
 
     try {
-      // Fetch all data concurrently
+
       var data = await Future.wait([
         fetchData('CPUData'),
         fetchData('GPUData'),
@@ -591,14 +589,12 @@ class _MainPageState extends State<MainPage> {
         fetchData('PSUData')
       ]);
 
-      // Extract data
       List<Map<String, dynamic>> cpus = data[0];
       List<Map<String, dynamic>> gpus = data[1];
       List<Map<String, dynamic>> mobos = data[2];
       List<Map<String, dynamic>> rams = data[3];
       List<Map<String, dynamic>> psus = data[4];
 
-      // Select components
       var selectedCPU = _selectBestComponent(cpus, budgets['CPU']!, _getBenchmark);
       var selectedGPU = _selectBestComponent(gpus, budgets['GPU']!, _getBenchmark);
 
@@ -606,7 +602,6 @@ class _MainPageState extends State<MainPage> {
         throw Exception('CPU or GPU selection failed.');
       }
 
-      // Match motherboard socket
       String cpuSocket = selectedCPU['Socket'];
       var selectedMobo = _selectMatchingComponent(
         mobos,
@@ -624,13 +619,11 @@ class _MainPageState extends State<MainPage> {
 
       var selectedPSU = _selectRandomComponent(psus, budgets['PSU']!);
 
-      // Final validation
       if ([selectedCPU, selectedGPU, selectedMobo, selectedRAM, selectedPSU]
           .any((component) => component.isEmpty)) {
         throw Exception('One or more components could not be selected.');
       }
 
-      // Update UI state
       setState(() {
         selectedItems['CPU'] = selectedCPU;
         selectedItems['GPU'] = selectedGPU;
@@ -650,23 +643,23 @@ class _MainPageState extends State<MainPage> {
     switch (useCase) {
       case '🕹️ Gaming':
         return {
-          'GPU': budget * 0.5,
-          'CPU': budget * 0.4,
+          'GPU': budget * 0.45,
+          'CPU': budget * 0.35,
           'Mobo': budget * 0.15,
           'RAM': budget * 0.1,
           'PSU': budget * 0.05,
         };
       case '💼 Work':
         return {
-          'GPU': budget * 0.4,
-          'CPU': budget * 0.5,
+          'GPU': budget * 0.35,
+          'CPU': budget * 0.45,
           'Mobo': budget * 0.15,
           'RAM': budget * 0.1,
           'PSU': budget * 0.05,
         };
       default:
         return {
-          'GPU': budget * 0.4,
+          'GPU': budget * 0.35,
           'CPU': budget * 0.35,
           'Mobo': budget * 0.15,
           'RAM': budget * 0.1,
@@ -693,17 +686,13 @@ class _MainPageState extends State<MainPage> {
         : {};
   }
 
-  Map<String, dynamic> _selectMatchingComponent(
-      List<Map<String, dynamic>> components,
-      double budget,
-      bool Function(Map<String, dynamic>) condition) {
+  Map<String, dynamic> _selectMatchingComponent(List<Map<String, dynamic>> components, double budget, bool Function(Map<String, dynamic>) condition) {
     var filtered = components.where((c) =>
     _getPrice(c['AvgPrice']) <= budget && condition(c)).toList();
     return filtered.isNotEmpty ? filtered[Random().nextInt(filtered.length)] : {};
   }
 
-  Map<String, dynamic> _selectRandomComponent(
-      List<Map<String, dynamic>> components, double budget) {
+  Map<String, dynamic> _selectRandomComponent(List<Map<String, dynamic>> components, double budget) {
     var filtered = components
         .where((c) => _getPrice(c['AvgPrice']) <= budget)
         .toList();
@@ -714,11 +703,11 @@ class _MainPageState extends State<MainPage> {
     DelightToastBar(
       autoDismiss: true,
       builder: (context) => ToastCard(
-        color: sThirdColor,
+        color: Colors.red,
         leading: const FaIcon(
           FontAwesomeIcons.triangleExclamation,
           size: 25,
-          color: Colors.red,
+          color: sTextColor,
         ),
         title: Text(
           message,
