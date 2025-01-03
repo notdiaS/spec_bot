@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:bordered_text/bordered_text.dart';
 import 'package:expansion_tile_card/expansion_tile_card.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_icon_class/font_awesome_icon_class.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,7 +19,7 @@ class SavedPage extends StatefulWidget {
 }
 
 class _SavedPageState extends State<SavedPage> {
-
+  late final BuildModel? receivedBuild;
   List<BuildModel> savedBuilds = [];
   List<TextEditingController> titleControllers = [];
 
@@ -31,6 +34,57 @@ class _SavedPageState extends State<SavedPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: sPrimaryColor,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: sSecondaryColor,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 50,
+              height: 50,
+              child: Image.asset("assets/images/robot.png"),
+            ),
+            const SizedBox(width: 10),
+            Text('Spec', style: stdTextStyle(Colors.white, bigFont)),
+            Text('Bot', style: stdTextStyle(sTextColor, bigFont)),
+          ],
+        ),
+        centerTitle: true,
+      ),
+        bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: sSecondaryColor,
+        selectedItemColor: sTextColor,
+        selectedLabelStyle: stdTextStyle(sTextColor, smallFont),
+        unselectedLabelStyle: stdTextStyle(sThirdColor, smallFont),
+        unselectedItemColor: sThirdColor,// Include BottomNavigationBar
+        onTap: (int index) {
+          if (index == 0) {
+            Get.offAllNamed('/'); // Navigate to the main page
+          } else if (index == 1) {
+            // Do nothing, you are already on the saved page
+          }
+        },
+        currentIndex: 1, // Set the current index to highlight "Saved"
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.robot),
+            activeIcon: FaIcon(
+              FontAwesomeIcons.robot,
+              size: 24,
+            ),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: FaIcon(FontAwesomeIcons.clipboardList),
+            activeIcon: FaIcon(
+              FontAwesomeIcons.clipboardCheck,
+              size: 24,
+            ),
+            label: 'Saved',
+          ),
+        ],
+      ),
       body: savedBuilds.isEmpty
           ? Center(
         child: Text(
@@ -154,7 +208,8 @@ class _SavedPageState extends State<SavedPage> {
 
     setState(() {
       savedBuilds = rawBuilds?.map((e) => BuildModel.fromJson(jsonDecode(e))).toList() ?? [];
-      titleControllers = savedBuilds.map((e) => TextEditingController(text: e.customTitle ?? 'Build')).toList();
+      // Initialize titleControllers AFTER setting savedBuilds
+      titleControllers = List.generate(savedBuilds.length, (index) => TextEditingController(text: savedBuilds[index].customTitle ?? 'Build'));
     });
   }
 
@@ -188,14 +243,13 @@ class _SavedPageState extends State<SavedPage> {
     await prefs.setStringList('savedBuilds', builds);
   }
 
-
   Widget buildInfoRow(String label, String model, String price, String url) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.0,horizontal: 20.0),
       child: Container(
         decoration: BoxDecoration(color: Colors.white24,borderRadius: BorderRadius.circular(10)),
         child: Padding(
-          padding: const EdgeInsets.only(left: 20.0,top: 10.0,bottom: 10.0),
+          padding: const EdgeInsets.only(left: 10.0,top: 10.0,bottom: 10.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
