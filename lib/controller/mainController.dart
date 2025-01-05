@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/colors.dart';
 import '../constants/models.dart';
+import 'package:html/parser.dart' as parser;
+import 'package:http/http.dart' as http;
 
 class MainController extends GetxController {
   final RoundedLoadingButtonController _btnController = RoundedLoadingButtonController();
@@ -219,26 +221,25 @@ class MainController extends GetxController {
     }
   }
 
-  void _doSomething() async {
-    _btnController.start();
-    bool success = await autoBuild();
-
-    if (success) {
-      _btnController.success();
-      Timer(const Duration(seconds: 5), () {
-        _btnController.reset();
-      });
-    } else {
-      _btnController.error();
-      Timer(const Duration(seconds: 3), () {
-        _btnController.reset();
-      });
-    }
-  }
+  // void _doSomething() async {
+  //   _btnController.start();
+  //   bool success = await autoBuild();
+  //
+  //   if (success) {
+  //     _btnController.success();
+  //     Timer(const Duration(seconds: 5), () {
+  //       _btnController.reset();
+  //     });
+  //   } else {
+  //     _btnController.error();
+  //     Timer(const Duration(seconds: 3), () {
+  //       _btnController.reset();
+  //     });
+  //   }
+  // }
 
   void _showErrorToast(String message) {
     if (Get.context != null) {
-      // Check if context is available
       DelightToastBar(
         autoDismiss: true,
         builder: (context) => ToastCard(
@@ -250,7 +251,7 @@ class MainController extends GetxController {
           ),
           title: Text(
             message,
-            style: stdTextStyle(sTextColor, smallFont),
+            style: stdTextStyle(Colors.white, smallFont),
           ),
         ),
       ).show(Get.context!);
@@ -348,7 +349,6 @@ class MainController extends GetxController {
     );
 
     await saveBuild(build);
-
     DelightToastBar(
       autoDismiss: true,
       builder: (context) => ToastCard(
@@ -365,4 +365,59 @@ class MainController extends GetxController {
       ),
     ).show(Get.context!);
   }
+
+  Future<String> scrapePrice(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        var document = parser.parse(response.body);
+
+
+        var priceElement = document.querySelector('#pd_v8 > div.bb_w > span.pb_v8 > span');
+
+        if (priceElement != null) {
+          String rawPrice = priceElement.text.trim();
+
+          print('Raw Price: $rawPrice');
+
+          String sanitizedPrice =
+          rawPrice.replaceAll(RegExp(r'[^\d,\.]'), '');
+
+          sanitizedPrice = sanitizedPrice.replaceAll('.', '');
+
+          sanitizedPrice = sanitizedPrice.replaceAll(',', '.');
+
+          print('Sanitized Price: $sanitizedPrice');
+
+          double parsedPrice = double.tryParse(sanitizedPrice) ?? 0.0;
+
+          return parsedPrice.toStringAsFixed(2);
+        } else {
+          print('Price element not found!');
+        }
+      } else {
+        DelightToastBar(
+          snackbarDuration: const Duration(seconds: 1),
+          autoDismiss: true,
+          builder: (context) => ToastCard(
+            color: Colors.red,
+            leading: const FaIcon(
+              FontAwesomeIcons.triangleExclamation,
+              size: 25,
+              color: Colors.white,
+            ),
+            title: Text(
+              'HTTP Error: ${response.statusCode}. Try again in a bit!',
+              style: stdTextStyle(Colors.white, smallFont),
+            ),
+          ),
+        ).show(Get.context!);
+      }
+      return 'N/A';
+    } catch (e) {
+      print('Error: $e');
+      return 'N/A';
+    }
+  }
+
 }

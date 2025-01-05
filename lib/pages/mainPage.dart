@@ -1,9 +1,5 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
+
 import 'package:bordered_text/bordered_text.dart';
-import 'package:delightful_toast/delight_toast.dart';
-import 'package:delightful_toast/toast/components/toast_card.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:easy_url_launcher/easy_url_launcher.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +7,10 @@ import 'package:font_awesome_icon_class/font_awesome_icon_class.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spec_bot/pages/savedPage.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/colors.dart';
-import '../constants/models.dart';
 import 'package:spec_bot/controller/mainController.dart';
+
+
 
 class MainPage extends StatelessWidget {
   MainPage({Key? key}) : super(key: key);
@@ -107,8 +101,16 @@ class MainPage extends StatelessWidget {
           horizontal: screenWidth * 0.05, vertical: screenHeight * 0.0075),
     child: Obx(()=> DropdownSearch<Map<String, dynamic>>(
     items: items,
-    onChanged: (selectedItem) {
+    onChanged: (selectedItem) async {
     mainController.updateSelectedItem(hwType, selectedItem!);
+    if (selectedItem.containsKey('URL')) {
+      String price = await mainController.scrapePrice(selectedItem['URL']);
+      print(price);
+      if (price != 'N/A') {
+        selectedItem['AvgPrice'] = price;
+      }
+      mainController.updateSelectedItem(hwType, selectedItem);
+    }
     },
     selectedItem: mainController.selectedItems[hwType],
     dropdownBuilder: (context, selectedItem) {return Container(
@@ -159,7 +161,7 @@ class MainPage extends StatelessWidget {
     Padding(
     padding: const EdgeInsets.symmetric(horizontal: 1.0),
     child: Text(
-    '  💵${(double.tryParse(selectedItem['AvgPrice'] ?? '0')?.toStringAsFixed(0) ?? '0.00')}₺',
+    '  💵${(double.tryParse(selectedItem['AvgPrice'].toString())?.toStringAsFixed(0) ?? '0.00')}₺',
     style: stdTextStyle(sGreenColor, smallFont),
     ),
     ),
@@ -416,13 +418,14 @@ class MainPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10.0),
               child: ToggleButtons(
                 constraints: const BoxConstraints(minWidth: 60),
+                hoverColor: Colors.white12,
                 borderColor: sThirdColor,
                 selectedBorderColor: sTextColor,
                 borderWidth: 2,
                 selectedColor: sTextColor,
                 color: sThirdColor,
                 fillColor: sThirdColor,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(5),
                 onPressed: (int index) {
                   mainController.updateSelectedIndex(index);
                 },

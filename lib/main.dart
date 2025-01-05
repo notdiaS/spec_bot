@@ -12,17 +12,17 @@ void main() async {
     url: '',
     anonKey: '',
   );
-
   runApp(
     GetMaterialApp(
+      defaultTransition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 350),
       title: 'Spec Bot',
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       getPages: [
-        GetPage(name: '/', page: () => MainPage(), transition: Transition.fadeIn,),
-        GetPage(name: '/saved', page: () => const SavedPage(), transition: Transition.fadeIn,),
+        GetPage(name: '/', page: () => MainPage(),),
+        GetPage(name: '/saved', page: () => const SavedPage(),),
       ],
-      // ... other MaterialApp properties
     ),
   );
 }
